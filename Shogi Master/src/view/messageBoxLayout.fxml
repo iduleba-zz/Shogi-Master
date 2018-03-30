@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="120.0" prefWidth="471.0" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label fx:id="lbl" alignment="CENTER" contentDisplay="TEXT_ONLY" layoutX="21.0" layoutY="26.0" prefHeight="69.0" prefWidth="430.0" text="Looking for players..." />
+   </children>
+</AnchorPane>
