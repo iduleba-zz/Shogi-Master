@@ -16,20 +16,20 @@ import javafx.scene.paint.Color;
 public class Piece {
 	private static HashMap<String, String> url = new HashMap<String, String>();
 	static {
-		url.put("P", "imgs\\PAWN.png");
-		url.put("+P", "imgs\\P_PAWN.png");
-		url.put("L", "imgs\\LANCE.png");
-		url.put("+L", "imgs\\P_LANCE.png");
-		url.put("N", "imgs\\KNIGHT.png");
-		url.put("+N", "imgs\\P_KNIGHT.png");
-		url.put("S", "imgs\\SILVER.png");
-		url.put("+S", "imgs\\P_SILVER.png");
-		url.put("G", "imgs\\GOLD.png");
-		url.put("B", "imgs\\BISHOP.png");
-		url.put("+B", "imgs\\P_BISHOP.png");
-		url.put("R", "imgs\\ROOK.png");
-		url.put("+R", "imgs\\P_ROOK.png");
-		url.put("K", "imgs\\KING.png");
+		url.put("P", "imgs/PAWN.png");
+		url.put("+P", "imgs/P_PAWN.png");
+		url.put("L", "imgs/LANCE.png");
+		url.put("+L", "imgs/P_LANCE.png");
+		url.put("N", "imgs/KNIGHT.png");
+		url.put("+N", "imgs/P_KNIGHT.png");
+		url.put("S", "imgs/SILVER.png");
+		url.put("+S", "imgs/P_SILVER.png");
+		url.put("G", "imgs/GOLD.png");
+		url.put("B", "imgs/BISHOP.png");
+		url.put("+B", "imgs/P_BISHOP.png");
+		url.put("R", "imgs/ROOK.png");
+		url.put("+R", "imgs/P_ROOK.png");
+		url.put("K", "imgs/KING.png");
 	}
 
 	private int[] pos;

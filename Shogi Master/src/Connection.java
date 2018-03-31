@@ -3,7 +3,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import static java.lang.Thread.sleep;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -18,11 +17,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Ian
  */
 
-import java.util.Observable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-public class Connection extends Observable{
+public class Connection extends Thread{
+    public static final int PORT = 4444; 
     private Socket socket;
     private OutputStream outputStream;
     public final ConcurrentLinkedQueue<String> buffer = new ConcurrentLinkedQueue<>();
@@ -37,60 +33,46 @@ public class Connection extends Observable{
         this.outputStream = socket.getOutputStream();
     }
     
-    @Override
-    public void notifyObservers(Object arg) {
-        super.setChanged();
-        super.notifyObservers(arg);
+    private static final String CRLF = "\r\n"; // newline
+
+    /**
+     * Send a line of text
+     */
+    public void send(String text) {
+        try {
+            outputStream.write((text + CRLF).getBytes());
+            outputStream.flush();
+        } catch (IOException ex) {
+            if (ex.getMessage().contains("Broken pipe")) {
+                System.out.println(ex.getMessage());
+                //notifyObservers("Closed Connection.");
+            } else {
+                System.out.println(ex.getMessage());
+                //notifyObservers(ex);
+            }
+        }
+    }
+
+    /**
+     * Close the socket
+     */
+    public void close_connection(){
+        try {
+            socket.close();
+        } catch (IOException ex) {}
     }
     
-    public void open_connection(){
+    @Override  
+    public void run(){
         try {
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(socket.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                buffer.add(line);
+                if(!line.equals("")) buffer.add(line);
                 //notifyObservers(line);
             }
         } catch (IOException ex) {
             //notifyObservers(ex);
         }
     }
-    
-    public void close_connection(){
-        try {
-            outputStream.close();
-            socket.close();
-        } catch (IOException ex) {
-            //notifyObservers(ex);
-        }
-    }
-    
-    /*String clientName = nameField.getCharacters().toString();
-    String server = hostField.getCharacters().toString();
-    if(clientName == null) clientName = "Anonymous";
-    
-    try {
-    Connection connection = new Connection(server, PORT);
-    } catch (IOException ex) {
-    AlertBox.display("Fail", "Connection Failed!");
-    }
-    
-    //start listening
-    connection.start();
-    
-    //troca a tela
-    
-    Thread receivingThread = new Thread() {
-    @Override
-    public void run() {
-    try {
-    while(!connection.buffer.poll().equals("OpponentFound!")){sleep(1000);}
-    
-    } catch (InterruptedException ex) {
-    Logger.getLogger(LoginControl.class.getName()).log(Level.SEVERE, null, ex);
-    }
-    }
-    };
-    receivingThread.start();*/
 }
