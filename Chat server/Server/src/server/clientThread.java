@@ -14,6 +14,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -36,7 +38,7 @@ public class clientThread extends Thread{
         this.clientSocket = clientSocket;
         this.threads = threads;
         this.queue = queue;
-        clientName = "Anonymous";
+        clientName = null;
         opponent = null;
         this.date = date;
     }
@@ -50,9 +52,9 @@ public class clientThread extends Thread{
     private boolean findOpponent() throws Exception{
         if(opponent != null){
             //opponent has been assigned by another thread
-            this.os.println("Opponent Found: " + this.opponent.clientName);
-            instructions(os, this.clientName, this.opponent.clientName);
-            instructions(this.opponent.os, this.opponent.clientName, this.clientName);
+            this.os.println("Opponent Found: 1" + this.opponent.clientName);
+            //instructions(os, this.clientName, this.opponent.clientName);
+            //instructions(this.opponent.os, this.opponent.clientName, this.clientName);
             return true;
         }
         
@@ -67,7 +69,7 @@ public class clientThread extends Thread{
                 queue.remove(this);
                 this.opponent = challenger;
                 challenger.opponent = this;
-                //this.os.println("Opponent: " + this.opponent.clientName);
+                this.os.println("Opponent Found: 2" + this.opponent.clientName);
                 //instructions();
 
                 return true;
@@ -158,38 +160,34 @@ public class clientThread extends Thread{
             os = new PrintStream(clientSocket.getOutputStream());
             
             //Read name of the client
-            String name = "";
-            while (!shouldStop() && !clientSocket.isClosed()) {
-                os.println("Enter your name.");
+            String name = null;
+            while (!shouldStop() && !clientSocket.isClosed() && (name==null || name.equals(""))) {
+                os.write(1);sleep(100);
                 name = is.readLine().trim();
-                if (name.indexOf('|') == -1) {
-                    break;
-                }
-                else {
-                    os.println("The name should not contain '|' character.");
-                }
             }
             
-            if(name!=null){
-                clientName = name;
-                os.println("Welcome " + clientName + "!");
-                os.println("Finding a challenger...");
-            }
+            //if(name!=null){
+            clientName = name;
+                //os.println("Welcome " + clientName + "!");
+                //os.println("Finding a challenger...");
+            //}
             
             //Let's find a challenger (the first one avaible to play, i.e., the one that has been waiting the longest)
             if(this.opponent == null){
-                while(findOpponent()==false && !shouldStop() && !clientSocket.isClosed()) {sleep(5000);} //wait 5 seconds (lessen the burden on the server)
+                while(findOpponent()==false && !shouldStop() && !clientSocket.isClosed()) {os.write(1);sleep(5000);} //wait 5 seconds (lessen the burden on the server)
             }
             else{//opponent has been assigned by another thread
-                this.os.println("Opponent: " + this.opponent.clientName);
-                this.opponent.os.println("Opponent: " + this.clientName);
-                instructions(os, this.clientName, this.opponent.clientName);
-                instructions(this.opponent.os, this.opponent.clientName, this.clientName);
+                this.os.println("Opponent Found: " + this.opponent.clientName);
+                //this.opponent.os.println("Opponent Found: " + this.clientName);
+                //instructions(os, this.clientName, this.opponent.clientName);
+                //instructions(this.opponent.os, this.opponent.clientName, this.clientName);
             }
             
             /* Start the game (exchange of messages) */
             while (!shouldStop() && !clientSocket.isClosed()) {
+                os.write(1);sleep(100);
                 String input = is.readLine(); if(shouldStop()){break;}
+                if(input == null || input.equals("")){continue;}
                 String[] msg = interpretMessage(input);
                 if(msg != null && clientName.equals(msg[1]) && this.opponent.clientName.equals(msg[2]) ){
                     if (msg[3].startsWith("/quit")){
@@ -215,7 +213,35 @@ public class clientThread extends Thread{
             }
         }
         catch (InterruptedException ie){}
-        catch (SocketException exception) {}
+        catch (SocketException e) {
+            if(e.getMessage().contains("Broken pipe")){
+                opponent.os.println("*** The user " + clientName + " is leaving! ***");
+                threads.remove(opponent);
+                opponent.opponent = null;
+                opponent.wasInterrupted = true;
+                opponent = null;
+                threads.remove(this);
+                wasInterrupted = true;
+                try {
+                    clientSocket.close();
+                } catch (IOException ex) {}
+            }
+        }
+        catch (NullPointerException e) {
+            if(opponent!=null){
+                opponent.os.println("*** The user " + clientName + " is leaving! ***");
+                opponent.opponent = null;
+                opponent.wasInterrupted = true;
+                threads.remove(opponent);
+                opponent = null;
+            }
+            threads.remove(this);
+            wasInterrupted = true;
+            try {
+                clientSocket.close();
+            } catch (IOException ex) {
+            }
+        }
         catch (Exception e) {JOptionPane.showMessageDialog(null, e, "Error", JOptionPane.INFORMATION_MESSAGE);}
     }
 }

@@ -139,10 +139,6 @@ public class ChatClient {
             });
         }
     }
-
-    public static void exitProcedure(JFrame frame){
-        frame.dispose();
-    }
     
     public static void main(String[] args) {
         String server = args[0];
@@ -151,7 +147,7 @@ public class ChatClient {
 
         JFrame frame = new ChatFrame(access);
         frame.setTitle("Connected to " + server + ":" + port);
-        //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
