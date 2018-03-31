@@ -1,6 +1,5 @@
 import javafx.application.Application;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -9,15 +8,15 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Button;
-import javafx.event.EventHandler;
-import javafx.event.ActionEvent;
-import java.net.Socket;
-
 import java.io.IOException;
 import javafx.application.Platform;
 
 public class Main extends Application {
+    public Connection connection = null;
     static boolean exit = false;
+    public static void exit(){
+        Main.exit = true;
+    }
     
     public static void main(String[] args) {
         launch(args); //launch the program as a javaFX application
@@ -26,12 +25,28 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         //Start Login window
-        Socket socket = null;
-        String players[];
-        players = loginScene(socket);
-
+        String players[] = loginScene();
+        
+        int FIRST = Character.getNumericValue(players[1].charAt(0));
+        System.out.println("FIRST "+FIRST);
+        players[1] = players[1].substring(1);
+        
+        if(exit) return;
         //verify if socket is connected
         primaryStage.setMaximized(true);
+        
+        primaryStage.setOnCloseRequest(e -> {
+            try {
+                if(connection!=null){
+                    System.out.println("close");
+                    connection.send("Quit");
+                    connection.close_connection();
+                }
+            } catch (IOException ex) {
+                
+            }
+            Platform.exit();
+        });
         
         BorderPane bPane = new BorderPane();
         Scene scene = new Scene(bPane);
@@ -42,8 +57,21 @@ public class Main extends Application {
 
         //---------------------------------------------------------------------
         Board board = new Board(centerPane, -250, -255, 500, 510, true); //must be created before the pieces
-        Player p1 = new Player("player1", Player.BLACK, Player.LOCAL);
-        Player p2 = new Player("player2", Player.WHITE, Player.REMOTE);        
+        Player p1 = null;
+        Player p2 = null;
+        if(FIRST==1){
+            p1 = new Player(players[0], Player.BLACK, Player.LOCAL);
+            p2 = new Player(players[1], Player.WHITE, Player.REMOTE); 
+        }
+        else if(FIRST==2){
+            p1 = new Player(players[0], Player.WHITE, Player.LOCAL);
+            p2 = new Player(players[1], Player.BLACK, Player.REMOTE); 
+        }
+        else{
+            AlertBox.display("Error" + FIRST, "Server did not decide the first player!");
+            Platform.exit();
+        }
+        
         p1.initPieces(board);
         p2.initPieces(board);
 
@@ -52,11 +80,10 @@ public class Main extends Application {
         
         scene.setFill(Color.rgb(240, 240, 240));
         primaryStage.setScene(scene);
-        if(!exit)
-            primaryStage.show();
+        primaryStage.show();
     }
     
-    public String[] loginScene(Socket socket) {
+    public String[] loginScene() {
         Stage window = new Stage();
         window.setTitle("Shogi");
         Parent rootLayout;
@@ -74,7 +101,11 @@ public class Main extends Application {
         window.setScene(scene);
         window.setResizable(false);
         window.setOnCloseRequest(e -> {
-            this.exit = true;
+            Main.exit();
+            if (connection!=null) try {
+                connection.send("Quit");
+                connection.close_connection();
+            } catch (IOException ex) {}
             Platform.exit();
         });
         
@@ -90,8 +121,8 @@ public class Main extends Application {
                 AlertBox.display("Oops", "Name too long!");
             }
             else{
-                LoginControl login = new LoginControl(name, host, socket, players, window);
-                login.validate();
+                LoginControl login = new LoginControl(name, host, players, window);
+                connection = login.validate();
             }
         });
         

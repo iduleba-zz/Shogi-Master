@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Connection extends Thread{
     public static final int PORT = 4444; 
+    public static final String keepAlive = "Keep Alive";
     private Socket socket;
     private OutputStream outputStream;
     public final ConcurrentLinkedQueue<String> buffer = new ConcurrentLinkedQueue<>();
@@ -28,8 +29,8 @@ public class Connection extends Thread{
         this.outputStream = outputStream;
     }
     
-    public Connection(String server, int port) throws IOException{
-        this.socket = new Socket(server, port);
+    public Connection(String server) throws IOException{
+        this.socket = new Socket(server, PORT);
         this.outputStream = socket.getOutputStream();
     }
     
@@ -56,10 +57,8 @@ public class Connection extends Thread{
     /**
      * Close the socket
      */
-    public void close_connection(){
-        try {
-            socket.close();
-        } catch (IOException ex) {}
+    public void close_connection() throws IOException{
+        socket.close();
     }
     
     @Override  
@@ -68,7 +67,8 @@ public class Connection extends Thread{
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                if(!line.equals("")) buffer.add(line);
+                System.out.println(line);
+                if(!line.equals("") && !line.equals(keepAlive)) buffer.add(line);
                 //notifyObservers(line);
             }
         } catch (IOException ex) {

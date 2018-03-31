@@ -1,5 +1,3 @@
-
-import java.net.Socket;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.concurrent.Task;
@@ -10,38 +8,34 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 
 import java.io.IOException;
-import javafx.application.Platform;
 
 public class LoginControl {
-    Connection connection;
+    Connection connection = null;
     String[] players;
     String name;
     String host;
-    Socket socket;
     Stage window;
 
-    public LoginControl(String name, String host, Socket socket, String[] players, Stage window) {
+    public LoginControl(String name, String host, String[] players, Stage window) {
         this.name = name;
         this.host = host;
         this.players = players;
-        this.socket = socket;
         this.window = window;
-        this.connection = null;
     }
 
-    public void validate() {
+    public Connection validate() {
         //send Name to the server
         if (name == null || name.equals("")) {
             name = "Anonymous";
         }
         players[0] = name;
-
+        
         //start connection
         try {
-            connection = new Connection(host, Connection.PORT);
+            connection = new Connection(host);
         } catch (IOException ex) {
             AlertBox.display("Fail", "Connection Failed!");
-            return;
+            return null;
         }
 
         //start listening
@@ -51,9 +45,11 @@ public class LoginControl {
         Stage wMsg = new Stage();
         wMsg.initModality(Modality.APPLICATION_MODAL);
         wMsg.setTitle("Waiting...");
-        window.setOnCloseRequest(e -> {
-            if(connection!=null) connection.close_connection();
-            Platform.exit();
+        wMsg.setOnCloseRequest(e -> {
+            if(connection!=null) try {
+                connection.send("Quit");
+                connection.close_connection();
+            } catch (IOException ex) {System.out.println("Exit not successfull");}
         });
         
         Parent rootLayout;
@@ -63,7 +59,7 @@ public class LoginControl {
             rootLayout = loader.load();
         } catch (IOException ex) {
             ex.printStackTrace();
-            return;
+            return connection;
         }
         Scene scene = new Scene(rootLayout);
         Label label = (Label) scene.lookup("#lbl");
@@ -84,7 +80,10 @@ public class LoginControl {
                     protected String call() {
                         try {
                             String line;
-                            while ((line = connection.buffer.poll()) == null || !line.startsWith("Opponent Found: ")) {
+                            while ((line = connection.buffer.poll()) == null ||( 
+                                    !line.startsWith("Opponent Found: ") &&
+                                    !line.startsWith("*** Server closed ***") &&
+                                    !line.startsWith("No opponents"))) {
                                 Thread.sleep(250);
                             }
                             return line;
@@ -97,15 +96,31 @@ public class LoginControl {
 
                     @Override
                     protected void succeeded() {
-                        players[1] = getValue();
-                        System.out.println(players[0] + "!" + players[1]);
-                        window.close();
-                        wMsg.close();
+                        String ret = getValue();
+                        if(ret.equals("*** Server closed ***")){
+                            if(connection!=null) try {
+                                connection.close_connection();
+                            } catch (IOException ex) {}
+                            AlertBox.display("Server Shutdown", "*** Server closed ***");
+                            wMsg.close();
+                        }
+                        else if(ret.equals("No opponents")){
+                            if(connection!=null) try {
+                                connection.close_connection();
+                            } catch (IOException ex) {}
+                            AlertBox.display("=(", "No other player connected. Try again later.");
+                            wMsg.close();
+                        }
+                        else{
+                            players[1] = getValue().replace("Opponent Found: ","");
+                            window.close();
+                            wMsg.close();
+                        }
                     }
                 };
             }
         };
         service.start();
-
+        return connection;
     }
 }
