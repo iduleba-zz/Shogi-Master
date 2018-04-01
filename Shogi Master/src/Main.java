@@ -27,11 +27,11 @@ public class Main extends Application {
         //Start Login window
         String players[] = loginScene();
         
+        if(exit) return;
         int FIRST = Character.getNumericValue(players[1].charAt(0));
         System.out.println("FIRST "+FIRST);
         players[1] = players[1].substring(1);
         
-        if(exit) return;
         //verify if socket is connected
         primaryStage.setMaximized(true);
         
@@ -49,14 +49,13 @@ public class Main extends Application {
         });
         
         BorderPane bPane = new BorderPane();
-        Scene scene = new Scene(bPane);
-        primaryStage.setScene(scene);
-        
         Pane centerPane = new Pane();
+        Scene scene = new Scene(bPane);   
         centerPane.setMaxSize(0.5 * scene.getWidth(), 0.8 * scene.getHeight());
-
+        bPane.setCenter(centerPane);
+        scene.setFill(Color.rgb(240, 240, 240));
+        primaryStage.setScene(scene);
         //---------------------------------------------------------------------
-        Board board = new Board(centerPane, -250, -255, 500, 510, true); //must be created before the pieces
         Player p1 = null;
         Player p2 = null;
         if(FIRST==1){
@@ -72,14 +71,10 @@ public class Main extends Application {
             Platform.exit();
         }
         
-        p1.initPieces(board);
-        p2.initPieces(board);
-
+        Game game = new Game(p1, p2, connection, centerPane);
+        game.init();
         //---------------------------------------------------------------------
-        bPane.setCenter(centerPane);
         
-        scene.setFill(Color.rgb(240, 240, 240));
-        primaryStage.setScene(scene);
         primaryStage.show();
     }
     

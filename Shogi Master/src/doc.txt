@@ -1,0 +1,61 @@
+CLASSES
+
+Board
+  FIELDS
+    private double width
+    private double heigth
+    private double pos_y
+    private double pos_x
+    private Pane pane //where the board is to be drawn
+    private boolean orientation //board orientation. true if black is local player, false if white is local player
+    private Piece[][] square; //maps the squares with the piece on it. if there's no piece then it contains null.
+	
+  METHODS
+    private void init() // create all board's components and add them to Pane
+    public int getX(int i) //returns X position of the i-th column's center (i in shogi notation)
+    public int getY(int j) //returns Y position of the j-th row's center (j in shogi notation)
+    
+    //returns an array with the position (shogi notation) of pixel (x, y)
+    //returns null if outside the board
+    public int[] getPos(int x, int y)
+
+    public double vSpacing() //returns the height of a board tile
+    public double hSpacing() //returns the width of a board tile
+    public void setPiece(Piece piece, int i, int j) //puts piece in square (i, j) (shogi notation)
+    public void removePiece(int i, int j) //remove piece from square(i, j)
+    public Piece getPiece(int i, int j) //returns piece in square (i, j). returns null if there isn't any.
+    public void movePiece(int i1, int j1, int i2, int j2)
+ 
+
+Piece
+  FIELDS
+    private int[] pos //position in shogi notation, negative if the pience is on the side board
+    public String id //id of the piece. "P" for pawn, "K" for king, etc.
+    private Image img //img for the piece
+    private ImageView //where img is to be drawn
+    private Player player //the player who owns the piece
+
+  METHODS
+    public void init(Board board) //set the piece on the board. to be called only after the creation of the piece
+    public Player getPlayer() //returns the player
+    public void updatePos(int[] pos) //updates the position and redraw the piece
+    public int[] getPos() //returns array pos
+    public String toString() //returns id
+
+
+Player
+  FIELDS
+    LinkedList<Piece> boardPieces //the pieces on the board
+    LinkedList<Piece> sidePieces //pieces on the side board
+    boolean location //LOCAL or REMOTE
+    boolean color //BLACK or WHITE
+
+  METHODS
+    public void initPieces(Board board) //init all his board pieces. To be called only at the beginning of the game.
+    private void addPieces() //creates all pieces for the player and adds them on the list of pieces	
+
+
+
+
+
+

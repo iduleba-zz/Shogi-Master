@@ -2,41 +2,48 @@ import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Rectangle;
 
-public class MouseEventHandler implements EventHandler<MouseEvent> {
-	Board board;
-	Piece selectedPiece;
-	boolean selection;
+public abstract class MouseEventHandler implements EventHandler<MouseEvent> {
+	static Board board;
+	static Piece selectedPiece;
+	static boolean selection;
+    static Game game;
 
-	//Need to implement class Game and add to Handler
 	public MouseEventHandler(Board board) {
 		selectedPiece = null;
 		selection = false;
 		this.board = board;
 	}
 
-	@Override
-    public void handle(MouseEvent mouseEvent) {
-        if(mouseEvent.getEventType() == MouseEvent.MOUSE_PRESSED) {
-        	//Clicked on the board
-        	if(mouseEvent.getSource() instanceof Rectangle) {
-        		
+    public MouseEventHandler(Board board, Game game) {
+        selectedPiece = null;
+        selection = false;
+        this.board = board;
+        this.game = game;
+    }
 
-        	//Clicked on some piece
-        	} else if(mouseEvent.getSource() instanceof Piece) {
-        		Piece src = (Piece) mouseEvent.getSource();
-        		//If it's the player's piece. STILL NEED TO CHECK IF IT'S THE LOCAL PLAYER TURN
-        		if(src.getPlayer().location == Player.LOCAL) {
-        			if(selection == true) {
-        				selectedPiece.removeEffect();
-        			}
-        			selection = true;
-        			selectedPiece = src;
-        			src.selectedEffect();
-        		} else {
-        			//GAME LOGIC
+    public void selectPiece(Piece p) {
+        p.selectedEffect();
+        selection = true;
+        selectedPiece = p;
+    }
 
-        		}
-        	}
-        }
-	}
+    public void unselectPiece() {
+        selectedPiece.removeEffect();
+        selection = false;
+        selectedPiece = null;
+    }
+
+    protected static void validateTurn(MouseEvent event) {
+        if(game.turn != Player.LOCAL)
+            event.consume();
+    }
+
+    protected static void finish(String move) {
+        if(move == null)
+            return;
+        
+        game.turn = Player.REMOTE;
+        game.opponentsMove();
+        game.sendMove(move);
+    }
 }
