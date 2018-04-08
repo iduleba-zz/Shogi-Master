@@ -25,8 +25,12 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         //Start Login window
-        String players[] = loginScene();
+        String players[] = loginScene(); 
         
+        //---- FOR TESTING --------------------------------------------------
+        //String players[] = new String[]{"1player1", "2player2"};
+        //-------------------------------------------------------------------
+
         if(exit) return;
         int FIRST = Character.getNumericValue(players[1].charAt(0));
         System.out.println("FIRST "+FIRST);

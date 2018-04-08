@@ -33,8 +33,6 @@ public class Board {
                 square[i][j] = null;
             }
         }
-
-
         init();
     }
 
@@ -176,6 +174,9 @@ public class Board {
 
     //------------- MOVES ----------------------------------------------------------------------------------------
     public String movePiece(int[] pos0, int[] pos1) {
+        if(!validate(getPiece(pos0), pos1))
+            return null;
+
         if (getPiece(pos1) != null) {
             return null;
         }
@@ -184,14 +185,41 @@ public class Board {
         setPiece(p, pos1);
 
         boolean promote = false;
-        if(p.getPlayer().color == Player.BLACK) {
-            if(pos1[1] <= 3)
-                promote = ConfirmBox.display("Promotion", "Do you want to promote the piece?");
-        } else if(pos1[1] >= 7) {
-            promote = ConfirmBox.display("Promotion", "Do you want to promote the piece?");
+        if(p.getPlayer().location == Player.LOCAL){
+            if(p.id.equals("P") || p.id.equals("L")) {
+                if(p.getPlayer().color == Player.BLACK) {
+                    if(pos1[1] <= 1) {
+                        p.promote();
+                        promote = true;
+                    }
+                } else if(pos1[1] >= 9) {
+                        p.promote();
+                        promote = true;
+                }
+            } else if(p.id.equals("N")) {
+                if(p.getPlayer().color == Player.BLACK) {
+                    if(pos1[1] <= 2) {
+                        p.promote();
+                        promote = true;
+                    }
+                } else if(pos1[1] >= 8) {
+                    p.promote();
+                    promote = true;
+                }
+            }
         }
-        if(promote)
-            p.promote();
+        
+        if(p.promoted == false && p.getPlayer().location == Player.LOCAL){
+            if(p.getPlayer().color == Player.BLACK) {
+                if(pos1[1] <= 3 || pos0[1] <= 3)
+                    promote = ConfirmBox.display("Promotion", "Do you want to promote the piece?");
+            } else if(pos1[1] >= 7 || pos0[1] >= 7) {
+                promote = ConfirmBox.display("Promotion", "Do you want to promote the piece?");
+            }
+            if(promote) {
+                p.promote();
+            }
+        }
 
         String move = "";
         move = move + Integer.toString(pos0[0]) + Integer.toString(pos0[1]);
@@ -202,6 +230,9 @@ public class Board {
     }
 
     public String capture(Piece piece0, Piece piece1) {
+        if(!validate(piece0, piece1.getPos()))
+            return null;
+
         int[] pos0 = piece0.getPos().clone();
         int[] pos1 = piece1.getPos().clone();
         Player player0 = piece0.getPlayer();
@@ -216,16 +247,7 @@ public class Board {
         player0.sideBoard.addPiece(piece1);
 
         //player 0 moves piece0 to pos1
-        movePiece(pos0, pos1);
-        boolean promote = false;
-        if(piece0.getPlayer().color == Player.BLACK){
-            if(pos1[1] <= 3)
-                promote = ConfirmBox.display("Promotion", "Do you want to promote the piece?");
-        } else if(pos1[1] >= 7) {
-            promote = ConfirmBox.display("Promotion", "Do you want to promote the piece?");
-        }
-        if(promote)
-            piece0.promote();
+        boolean promote = movePiece(pos0, pos1).charAt(4) == '1';
         
         String move = "";
         move = move + Integer.toString(pos0[0]) + Integer.toString(pos0[1]);
@@ -236,6 +258,9 @@ public class Board {
     }
 
     public String drop(Piece piece, int[] pos) {
+        if(!validate(piece, pos))
+            return null;
+
         //remove piece from dead pieces
         String move = "";
         move = move + Integer.toString(piece.getPos()[0]) + Integer.toString(piece.getPos()[1]);
@@ -249,6 +274,349 @@ public class Board {
         setPiece(piece, pos);
 
         return move;
+    }
+
+    public boolean validate(Piece piece, int[] pos) {
+        if(piece.getPlayer().location == Player.REMOTE) return true;
+        
+        if (piece.dead == true) {
+            if (piece.id.equals("P") || piece.id.equals("L")) {
+                //black
+                if (orientation == true) {
+                    return pos[1]!=1;
+                }
+                //white
+                return pos[1]!=9;
+            }
+            if(piece.id.equals("N")){
+                //black
+                if (orientation == true) {
+                    return pos[1]!=1 && pos[1]!=2;
+                }
+                //white
+                return pos[1]!=9 && pos[1]!=8;
+            }
+            return true;
+        }
+        int[] position = piece.getPos();
+
+        if (piece.promoted == true) {
+
+            if (piece.id.equals("+R")) {
+                if (pos[0] == position[0]) {
+                    if (pos[1] > position[1]) {
+                        for (int i = pos[1] - 1; i > position[1]; i--) {
+                            if (square[pos[0]-1][i-1] != null) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                    for (int i = pos[1] + 1; i < position[1]; i++) {
+                        if (square[pos[0]-1][i-1] != null) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                if (pos[1] == position[1]) {
+                    if (pos[0] > position[0]) {
+                        for (int i = pos[0] - 1; i > position[0]; i--) {
+                            if (square[i-1][pos[1]-1] != null) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                    for (int i = pos[0] + 1; i < position[0]; i++) {
+                        if (square[i-1][pos[1]-1] != null) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+            
+            if (piece.id.equals("+B")) {
+                if (pos[0] - position[0] == pos[1] - position[1] || pos[0] - position[0] == -pos[1] + position[1]) {
+
+                    int leap = Math.abs(pos[0] - position[0]);
+
+                    if (pos[0] > position[0] && pos[1] > position[1]) {
+                        for (int i = 1; i < leap; i++) {
+                            if (square[pos[0] - 1 - i][pos[1] - 1 - i] != null) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    if (pos[0] < position[0] && pos[1] < position[1]) {
+                        for (int i = 1; i < leap; i++) {
+                            if (square[pos[0] - 1 + i][pos[1] - 1 + i] != null) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    if (pos[0] > position[0] && pos[1] < position[1]) {
+                        for (int i = 1; i < leap; i++) {
+                            if (square[pos[0] - 1 - i][pos[1] - 1 + i] != null) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    //pos[0] < position[0] && pos[1] > position[1])
+                    for (int i = 1; i < leap; i++) {
+                        if (square[pos[0] - 1 + i][pos[1] - 1 - i] != null) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+
+            if (piece.id.equals("K") || piece.id.equals("+B") || piece.id.equals("+R")) {
+                if (position[0] == pos[0] + 1 && position[1] == pos[1]) {
+                    return true;
+                }
+                if (position[0] == pos[0] && position[1] == pos[1] + 1) {
+                    return true;
+                }
+                if (position[0] == pos[0] - 1 && position[1] == pos[1]) {
+                    return true;
+                }
+                if (position[0] == pos[0] && position[1] == pos[1] - 1) {
+                    return true;
+                }
+                if (position[0] == pos[0] + 1 && position[1] == pos[1] - 1) {
+                    return true;
+                }
+                if (position[0] == pos[0] + 1 && position[1] == pos[1] + 1) {
+                    return true;
+                }
+                if (position[0] == pos[0] - 1 && position[1] == pos[1] - 1) {
+                    return true;
+                }
+                if (position[0] == pos[0] - 1 && position[1] == pos[1] + 1) {
+                    return true;
+                }
+                return false;
+            }
+            
+            //moves as a golden general. Golden generals already have promoted=true
+            if (pos[0] == position[0] && pos[1] == position[1] + 1) {
+                return true;
+            }
+            if (pos[0] == position[0] && pos[1] == position[1] - 1) {
+                return true;
+            }
+            if (pos[0] == position[0] + 1 && pos[1] == position[1]) {
+                return true;
+            }
+            if (pos[0] == position[0] - 1 && pos[1] == position[1]) {
+                return true;
+            }
+
+            //black
+            if (orientation == true) {
+                if (pos[0] == position[0] - 1 && pos[1] == position[1] - 1) {
+                    return true;
+                }
+                if (pos[0] == position[0] + 1 && pos[1] == position[1] - 1) {
+                    return true;
+                }
+                return false;
+            }
+            //white
+            if (pos[0] == position[0] - 1 && pos[1] == position[1] + 1) {
+                return true;
+            }
+            if (pos[0] == position[0] + 1 && pos[1] == position[1] + 1) {
+                return true;
+            }
+            return false;
+
+        }
+
+        if (piece.id.equals("P")) {
+            //black
+            if (orientation == true) {
+                if (pos[0] == position[0] && pos[1] == position[1] - 1) {
+                    return true;
+                }
+                return false;
+            }
+
+            //white
+            if (pos[0] == position[0] && pos[1] == position[1] + 1) {
+                return true;
+            }
+            return false;
+        }
+
+        if (piece.id.equals("S")) {
+            if (pos[0] == position[0] - 1 && pos[1] == position[1] - 1) {
+                return true;
+            }
+            if (pos[0] == position[0] + 1 && pos[1] == position[1] + 1) {
+                return true;
+            }
+            if (pos[0] == position[0] - 1 && pos[1] == position[1] + 1) {
+                return true;
+            }
+            if (pos[0] == position[0] + 1 && pos[1] == position[1] - 1) {
+                return true;
+            }
+
+            //black
+            if (orientation == true) {
+                if (pos[0] == position[0] && pos[1] == position[1] - 1) {
+                    return true;
+                }
+                return false;
+            }
+            //white
+            if (pos[0] == position[0] && pos[1] == position[1] + 1) {
+                return true;
+            }
+            return false;
+        }
+
+        if (piece.id.equals("N")) {
+            //black
+            if (orientation == true) {
+                if (pos[0] == position[0] - 1 && pos[1] == position[1] - 2) {
+                    return true;
+                }
+                if (pos[0] == position[0] + 1 && pos[1] == position[1] - 2) {
+                    return true;
+                }
+                return false;
+            }
+
+            //white
+            if (pos[0] == position[0] - 1 && pos[1] == position[1] + 2) {
+                return true;
+            }
+            if (pos[0] == position[0] + 1 && pos[1] == position[1] + 2) {
+                return true;
+            }
+            return false;
+        }
+
+        if (piece.id.equals("L")) {
+            //black
+            if (orientation == false) {
+                if (pos[0] == position[0] && pos[1] > position[1]) {
+                    for (int i = pos[1] - 1; i > position[1]; i--) {
+                        if (square[pos[0] - 1][i-1] != null) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            //white
+            if (pos[0] == position[0] && pos[1] < position[1]) {
+                for (int i = pos[1] + 1; i < position[1]; i++) {
+                    if (square[pos[0] - 1][i-1] != null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        if (piece.id.equals("R")) {
+            if (pos[0] == position[0]) {
+                if (pos[1] > position[1]) {
+                    for (int i = pos[1] - 1; i > position[1]; i--) {
+                        if (square[pos[0] - 1][i-1] != null) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                for (int i = pos[1] + 1; i < position[1]; i++) {
+                    if (square[pos[0] - 1][i-1] != null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if (pos[1] == position[1]) {
+                if (pos[0] > position[0]) {
+                    for (int i = pos[0] - 1; i > position[0]; i--) {
+                        if (square[i-1][pos[1] - 1] != null) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                for (int i = pos[0] + 1; i < position[0]; i++) {
+                    if (square[i-1][pos[1] - 1] != null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        if (piece.id.equals("B")) {
+            if (pos[0] - position[0] != pos[1] - position[1] && pos[0] - position[0] != -pos[1] + position[1]) {
+                return false;
+            }
+
+            int leap = Math.abs(pos[0] - position[0]);
+
+            if (pos[0] > position[0] && pos[1] > position[1]) {
+                for (int i = 1; i < leap; i++) {
+                    if (square[pos[0] - 1 - i][pos[1] - 1 - i] != null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if (pos[0] < position[0] && pos[1] < position[1]) {
+                for (int i = 1; i < leap; i++) {
+                    if (square[pos[0] - 1 + i][pos[1] - 1 + i] != null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if (pos[0] > position[0] && pos[1] < position[1]) {
+                for (int i = 1; i < leap; i++) {
+                    if (square[pos[0] - 1 - i][pos[1] - 1 + i] != null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            //pos[0] < position[0] && pos[1] > position[1])
+            for (int i = 1; i < leap; i++) {
+                if (square[pos[0] - 1 + i][pos[1] - 1 - i] != null) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        return false;
     }
 
     //-----------------------------------------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.shape.Rectangle;
 
 public abstract class MouseEventHandler implements EventHandler<MouseEvent> {
 	static Board board;
@@ -31,11 +30,6 @@ public abstract class MouseEventHandler implements EventHandler<MouseEvent> {
         selectedPiece.removeEffect();
         selection = false;
         selectedPiece = null;
-    }
-
-    protected static void validateTurn(MouseEvent event) {
-        if(game.turn != Player.LOCAL)
-            event.consume();
     }
 
     protected static void finish(String move) {

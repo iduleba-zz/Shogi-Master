@@ -11,7 +11,11 @@ public class PieceEventHandler extends MouseEventHandler {
 
 	@Override
 	public void handle(MouseEvent mouseEvent) {
-        validateTurn(mouseEvent);
+        if(game.turn != Player.LOCAL){
+            mouseEvent.consume();
+            return;
+        }
+        
         String move = null;
 		if(mouseEvent.getEventType() == MouseEvent.MOUSE_PRESSED) {
             if(piece.getPlayer().location == Player.LOCAL){

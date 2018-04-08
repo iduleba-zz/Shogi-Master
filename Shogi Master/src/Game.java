@@ -23,6 +23,8 @@ public class Game {
 
 	public void init() {
 		this.board = new Board(this, -250, -255, 500, 510, localPlayer.color);
+		localPlayer.init(board);
+		remotePlayer.init(board);
 		localPlayer.initPieces(board);
 		remotePlayer.initPieces(board);
 
@@ -65,7 +67,7 @@ public class Game {
 				opponentsMove();
 			}
 			if(!line.startsWith("Play>>")) {
-				AlertBox.display("Error", "Can't read opponent's move: " + line);
+				AlertBox.display("Warning", line);
 				return;
 			}
 

@@ -1,5 +1,4 @@
 
-import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 
 public class BoardEventHandler extends MouseEventHandler {
@@ -10,7 +9,12 @@ public class BoardEventHandler extends MouseEventHandler {
 
     @Override
     public void handle(MouseEvent mouseEvent) {
-        validateTurn(mouseEvent);
+        
+        if(game.turn != Player.LOCAL){
+            mouseEvent.consume();
+            return;
+        }
+        
         String move = null;
         if (mouseEvent.getEventType() == MouseEvent.MOUSE_PRESSED) {
             int[] pos = board.getPos(mouseEvent.getX(), mouseEvent.getY());

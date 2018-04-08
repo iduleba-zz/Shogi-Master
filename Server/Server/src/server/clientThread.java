@@ -4,8 +4,6 @@
  * and open the template in the editor.
  */
 
-package server;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,8 +12,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -24,6 +20,7 @@ import javax.swing.JOptionPane;
  */
 
 public class clientThread extends Thread{
+    private int TIME_OUT = 20;
     private String clientName = null;
     private BufferedReader is = null;
     private PrintStream os = null;
@@ -102,26 +99,6 @@ public class clientThread extends Thread{
         return clientSocket;
     }
     
-    /* If the message is valid
-     * that is, if it has the following format: |NameSender(this)|NameReceiver(opponent)|move(or /quit)
-     */
-    private String[] interpretMessage(String input){
-        //debug
-        System.out.println(input);
-        
-        if (input.startsWith("|")) {
-            String[] msg = input.split("\\|");
-            if (msg.length == 4 && msg[1] != null && msg[2] != null && msg[3] != null) {
-                msg[1] = msg[1].trim();
-                msg[2] = msg[2].trim();
-                msg[3] = msg[3].trim();
-                if (!msg[1].isEmpty() && !msg[2].isEmpty() && !msg[3].isEmpty()){
-                    return msg;
-                } else{return null;}
-            } else{return null;}
-        } else{return null;}
-    }
-    
     //kill player
     private synchronized void RageQuit(int type){
         if(type==1){
@@ -153,7 +130,14 @@ public class clientThread extends Thread{
     }
     
     private boolean validateMove(String input){
-        return true;
+        //debug
+        //System.out.println("Validating move: " + input);
+        
+        if (input.startsWith("Play>>")) {
+            if(input.replace("Play>>","").length()==6){
+                return true;
+            } else {return false;}
+        } else{return false;}
     }
     
     boolean shouldStop() {
@@ -191,7 +175,7 @@ public class clientThread extends Thread{
             int i = 0;
             //Let's find a challenger (the first one avaible to play, i.e., the one that has been waiting the longest)
             if(this.opponent == null){
-                while(i<20 && !shouldStop() && !clientSocket.isClosed() && findOpponent()==false) {
+                while(i<TIME_OUT && !shouldStop() && !clientSocket.isClosed() && findOpponent()==false) {
                     i=i+1;
                     os.println("Keep Alive".toCharArray());sleep(1000);
                 }
@@ -204,29 +188,26 @@ public class clientThread extends Thread{
             }
             
             /* Start the game (exchange of messages) */
-            while (i<10 && !shouldStop() && !clientSocket.isClosed()) {
+            while (i<TIME_OUT && !shouldStop() && !clientSocket.isClosed()) {
                 
-                os.println("Keep Alive".toCharArray());sleep(100);
-                
-                String input = is.readLine(); 
+                String input = is.readLine();
                 if(shouldStop()) break;
+                if(input == null || input.equals("")) continue;
                 if(input.equals("Quit")){
                     RageQuit(1);
                     break;
                 }
                 
-                if(input == null || input.equals("")) continue;
-                String[] msg = interpretMessage(input);
-                if (validateMove(msg[1])) {
-                    opponent.os.println(">" + clientName + "< " + msg[3]);
-                    this.os.println("<" + clientName + "> " + msg[3]);
+                if (validateMove(input)) {
+                    //send move to opponent
+                    opponent.os.println(input);
 
                 } else {
                     System.out.println("Invalid message: " + input);
                 }
             }
             
-            if(i==20){
+            if(i==TIME_OUT){
                 os.println("No opponents");
             }
             
@@ -258,7 +239,7 @@ public class clientThread extends Thread{
                 System.out.println(e.getMessage());
             }
         }
-        catch (NullPointerException e) {System.out.println(e.getMessage());
+        catch (NullPointerException e) {System.out.println("Exception NULL: " + e.getMessage());
             if(opponent!=null){
                 opponent.os.println("*** The user " + clientName + " is leaving! ***");
                 opponent.opponent = null;
@@ -273,6 +254,6 @@ public class clientThread extends Thread{
             } catch (IOException ex) {
             }
         }
-        catch (Exception e) {JOptionPane.showMessageDialog(null, e, "Error", JOptionPane.INFORMATION_MESSAGE);}
+        catch (Exception e) {JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);}
     }
 }

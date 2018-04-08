@@ -43,7 +43,7 @@ public class ConfirmBox {
 
         Button noBtn = (Button) scene.lookup("#noBtn");
         noBtn.setOnAction(e -> {
-            decision[0] = true;
+            decision[0] = false;
             window.close();
         });
 

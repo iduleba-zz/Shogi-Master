@@ -67,7 +67,6 @@ public class Connection extends Thread{
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
                 if(!line.equals("") && !line.equals(keepAlive)) buffer.add(line);
                 //notifyObservers(line);
             }

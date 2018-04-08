@@ -11,20 +11,20 @@ import javafx.scene.paint.Color;
 public class Piece {
 	private static HashMap<String, String> url = new HashMap<String, String>();
 	static {
-		url.put("P", "imgs\\PAWN.png");
-		url.put("+P", "imgs\\P_PAWN.png");
-		url.put("L", "imgs\\LANCE.png");
-		url.put("+L", "imgs\\P_LANCE.png");
-		url.put("N", "imgs\\KNIGHT.png");
-		url.put("+N", "imgs\\P_KNIGHT.png");
-		url.put("S", "imgs\\SILVER.png");
-		url.put("+S", "imgs\\P_SILVER.png");
-		url.put("G", "imgs\\GOLD.png");
-		url.put("B", "imgs\\BISHOP.png");
-		url.put("+B", "imgs\\P_BISHOP.png");
-		url.put("R", "imgs\\ROOK.png");
-		url.put("+R", "imgs\\P_ROOK.png");
-		url.put("K", "imgs\\KING.png");
+		url.put("P", "imgs/PAWN.png");
+		url.put("+P", "imgs/P_PAWN.png");
+		url.put("L", "imgs/LANCE.png");
+		url.put("+L", "imgs/P_LANCE.png");
+		url.put("N", "imgs/KNIGHT.png");
+		url.put("+N", "imgs/P_KNIGHT.png");
+		url.put("S", "imgs/SILVER.png");
+		url.put("+S", "imgs/P_SILVER.png");
+		url.put("G", "imgs/GOLD.png");
+		url.put("B", "imgs/BISHOP.png");
+		url.put("+B", "imgs/P_BISHOP.png");
+		url.put("R", "imgs/ROOK.png");
+		url.put("+R", "imgs/P_ROOK.png");
+		url.put("K", "imgs/KING.png");
 	}
 
 	private int[] pos;
@@ -36,6 +36,9 @@ public class Piece {
 	public boolean promoted = false;
 
 	Piece(String id, Player player, int x, int y) {
+		if(id.equals("K") || id.equals("G"))
+			this.promoted = true;
+
 		this.pos = new int[2];
 		this.pos[0] = x;
 		this.pos[1] = y;
@@ -83,6 +86,7 @@ public class Piece {
 		} catch(FileNotFoundException e) {
 			System.err.println(e.getMessage());
 		}		
+		this.imgV.setImage(this.img);
       	if(this.player.location == Player.REMOTE) 
       		this.imgV.setRotate(180);
       	else
@@ -155,8 +159,8 @@ public class Piece {
 	}
 
 	public void unpromote() {
-		this.promoted = false;
 		if(this.id.startsWith("+")){
+			this.promoted = false;
 			this.id = this.id.substring(1);
 			updateImg();
 		}

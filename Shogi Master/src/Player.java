@@ -25,7 +25,7 @@ public class Player {
 		addPieces();	
 	}
 
-	public void initPieces(Board board) {
+	public void init(Board board) {
 		//init sideboard
 		double x, y;
 		double lbl_x, lbl_y;
@@ -50,7 +50,9 @@ public class Player {
 			name.setAlignment(Pos.BOTTOM_LEFT);
 		}
 		board.getPane().getChildren().add(name);
+	}
 
+	public void initPieces(Board board) {
 		for(Piece p: boardPieces) {
 			p.init(board);
 		}

@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package server;
 
 import java.io.PrintStream;
 import java.io.IOException;
@@ -60,7 +59,7 @@ public class Listener extends Thread{
             serverSocket = new ServerSocket(portNumber);
         }
         catch (IOException e){
-            System.out.println(e);
+            System.out.println(e.getMessage());
             JOptionPane.showMessageDialog(null, e, "Error", JOptionPane.INFORMATION_MESSAGE);
             try {throw e;} catch (IOException ex) {JOptionPane.showMessageDialog(null, e, "Error", JOptionPane.INFORMATION_MESSAGE);}
         }
